@@ -55,7 +55,7 @@ const sendFirstPayload = (response) => {
         event: 'load',
         data: {
           stocks: latestStockPrices,
-          graph: generateGraphFirstLoad()
+          graph: generateGraphData()
         }
       })
     })
@@ -93,7 +93,7 @@ const randomNumber = (min, max) => Math.floor(Math.random() * (max - min + 1)) +
 const randomGraphValue = () => randomNumber(60, 100)
 
 // generate n data points in the past to show on a graph
-const generateGraphFirstLoad = () => [...Array(10)].map((_, index) => {
+const generateGraphData = () => [...Array(10)].map((_, index) => {
   const t = new Date()
 
   t.setSeconds(t.getSeconds() - index * UPDATE_TIME_SECONDS)
