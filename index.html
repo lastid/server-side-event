@@ -28,11 +28,12 @@
     <div id='table'></div>
 
     <script>
+      const LIVE_TIME = 10 * 60 * 1000
       let graphConfig
       let chart
 
       const init = () => {
-        const eventSource = new EventSource("http://localhost:8080/sse")
+        const eventSource = new EventSource("/sse")
 
         eventSource.addEventListener('load', event => {
           const { stocks, graph } = JSON.parse(event.data)
@@ -49,6 +50,12 @@
         })
 
         eventSource.onerror = e => console.error('Event source failed', e)
+
+        // close the connection to not consume network data
+        setTimeout(() => {
+          document.body.innerHTML = 'Connection closed to save data. Reresh the page to test again.'
+          eventSource.close()
+        }, LIVE_TIME)
       }
 
       const renderTable = (stocks) => `
