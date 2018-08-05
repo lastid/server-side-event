@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Realtime data with Server Side Event</title>
+
+    <style>
+      th, td { padding: 5px 10px; }
+
+      tr {
+        background-color: white;
+        transition: background-color 300ms linear;
+      }
+
+      .change { background-color: #FFE4B5; }
+    </style>
+
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.2/Chart.min.js'></script>
+  </head>
+
+  <body>
+    <h2>Should view this page in Chrome which can understand ES6</h2>
+
+    <div style="width:75%;max-width:800px;">
+      <canvas id="canvas"></canvas>
+    </div>
+    <hr />
+    <div id='table'></div>
+
+    <script>
+      let graphConfig
+      let chart
+
+      const init = () => {
+        const eventSource = new EventSource("http://localhost:8080/sse")
+
+        eventSource.addEventListener('load', event => {
+          const { stocks, graph } = JSON.parse(event.data)
+
+          drawGraph(graph)
+          document.getElementById('table').innerHTML = renderTable(stocks)
+        })
+
+        eventSource.addEventListener('update', event => {
+          const { stocks, graph } = JSON.parse(event.data)
+
+          updateGraph(graph)
+          updateTableRows(stocks)
+        })
+
+        eventSource.onerror = e => console.error('Event source failed', e)
+      }
+
+      const renderTable = (stocks) => `
+        <table>
+          <thead>
+            <tr>
+              <th>Symbol</th>
+              <th>Price</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${stocks.map(({ symbol, price }) => `
+              <tr id='${symbol}'>
+                <td>${symbol}</td>
+                <td>${price}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `
+
+      const drawGraph = graphData => {
+        graphConfig = {
+          type: 'line',
+          data: {
+            labels: graphData.map(({ time }) => time),
+            datasets: [{
+              label: 'Price',
+              backgroundColor: '#9999ff',
+              borderColor: '#9999ff',
+              data: graphData.map(({ value }) => value),
+              fill: false
+            }]
+          },
+          options: {
+            responsive: true,
+            title: { display: true, text: 'Realtime data from server' },
+            tooltips: { mode: 'index', intersect: false },
+            hover: { mode: 'nearest', intersect: true },
+            scales: {
+              xAxes: [{
+                scaleLabel: { display: true, labelString: 'Time' }
+              }],
+              yAxes: [{
+                ticks: { min: 60, max: 100 },
+                scaleLabel: { display: true, labelString: 'Price' }
+              }]
+            }
+          }
+        }
+
+        chart = new Chart('canvas', graphConfig)
+      }
+
+      const updateTableRows = stocks => stocks.forEach(({ symbol, price }) => {
+        const rowElement = document.getElementById(symbol)
+        const classList = rowElement.classList
+        const className = 'change'
+
+        rowElement.lastElementChild.innerText = price
+        classList.add(className)
+        setTimeout(() => classList.remove(className), 1000)
+      })
+
+      const updateGraph = (newGraphData) => {
+        const { labels, datasets: [{ data }] } = graphConfig.data
+
+        labels.shift()
+        labels.push(newGraphData.time)
+        data.shift()
+        data.push(newGraphData.value)
+        chart.update()
+      }
+
+      init()
+    </script>
+  </body>
+</html>

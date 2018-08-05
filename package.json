@@ -1,0 +1,14 @@
+{
+  "name": "server-side-event",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "start": "nodemon server.js"
+  },
+  "author": "lastid",
+  "license": "ISC",
+  "dependencies": {
+    "node-fetch": "^2.2.0",
+    "nodemon": "^1.18.3"
+  }
+}
